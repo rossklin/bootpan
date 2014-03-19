@@ -14,5 +14,5 @@ Imports:
     dynpan (>= 0.1)
 Suggests:
     testthat (>= 0.8)
-License: What license is it under?
+License: BSD_3_clause + file LICENSE
 LazyData: true
