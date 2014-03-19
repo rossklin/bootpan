@@ -38,10 +38,13 @@
 #' @param cols columns to resample from (defaults to all columns of \code{dt})
 #' @param num number of *keys* to resample (defaults to number of unique values in \code{tt})
 #' @param resample whether to sample with replacement (default)
+#' @param unique.name column name to use for disambiguating resampled values (set to NULL, default, not to include one)
 #'
 #' @details Gives a \code{data.table} with \code{num} rows and
 #' \code{length(cols)} columns, with resampled values from \code{dt}.
-resample_by_cols <- function(dt, cols=colnames(dt), num=NULL, resample=TRUE) {
+resample_by_cols <- function( dt, cols=colnames(dt), num=NULL
+                            , resample=TRUE
+                            , unique.name = NULL ) {
     available <- if(setequal(cols, key(dt))) {
         unique(dt)
     } else if(setequal(cols, colnames(cols))) {
@@ -54,5 +57,44 @@ resample_by_cols <- function(dt, cols=colnames(dt), num=NULL, resample=TRUE) {
     num <- maybe(num, navailable)
     result.indices <- sample.int(navailable, num, resample)
     #
-    available[result.indices]
+    result <- available[result.indices]
+    if(!is.null(unique.name))
+        result[,eval(unique.name):=.I]
+    result
+}
+
+#' Generate panel/time series samples by "Markov" procedure
+#'
+#' Generate bootstrap samples given a sampling procedure for initial values and
+#' a procedure for sampling transitions (conditional only on the current value
+#' of the process).
+#'
+#' @param times vector of timepoints at which to sample
+#' @param rinitial function to sample initial data.table/values
+#' @param rtransition function to sample transitions given a data.frame containing current values and the current and proceeding time point
+#' @param time.column.name column name to use store time values in (defaults to "time")
+#' @param ... additional values to pass to rinitial and rtransition
+#' 
+#' @details \code{rinitial} should take no paramters not specified in \code{...}
+#' while \code{rtransition} takes three arguments: the time to transition from,
+#' the time to transition to, and a data.table containing the current set of
+#' values, in that order.
+#'
+#' \code{rtransition} *is* allowed to destructively update the \code{data.table}
+#' it is passed, but should even then return that destructively updated data
+#' table.
+#'
+#' @export
+sample_markov <- function( times, rinitial, rtransition
+                         , time.column.name = "time", ... ) {
+    first.frame <- rinitial(...)
+    current.frame <- first.frame
+    #
+    frames <- list(copy(current.frame)[,eval(time.column.name):=times[1]])
+    for(i in seq_along(times)[-1]) {
+        current.frame <- rtransition(times[i-1], times[i], current.frame, ...)
+        frames[[i]] <- copy(current.frame)[,eval(time.column.name):=times[i]]
+    }
+    #
+    do.call(rbind, frames)
 }
