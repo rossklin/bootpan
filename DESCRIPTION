@@ -4,7 +4,9 @@ Version: 0.1
 Author: Tilo Wiklund <tilo@wiklund.co>
 Maintainer: Tilo Wiklund <tilo@wiklund.co>
 Authors@R: "Tilo Wiklund <tilo@wiklund.co> [aut, cre]"
-Description: Bootstraping methods for panel data, with focus on dynamic panel data where the individual time series are assumed to be (roughly) independent and controlled by a shared dynamic.
+Description: Bootstraping methods for panel data, with focus on dynamic panel
+    data where the individual time series are assumed to be (roughly)
+    independent and controlled by a shared dynamic.
 Depends:
     R (>= 3.0.1)
 Imports:
