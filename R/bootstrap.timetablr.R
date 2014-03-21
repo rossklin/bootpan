@@ -40,10 +40,17 @@
 #' @param new.index.name name to use for additional index column (for disambigating separate resamples of the same data, defaults to "resample", set to NULL if new index is not to be included)
 #'
 #' @export
-resample_series <- function(tt, num, resample=TRUE, new.index.name="resample") {
+resample_series <- function(tt, num=NULL, resample=TRUE, new.index.name="resample") {
     #TODO: Add option to disambiguate existing index columns instead
-    resample_by_cols( tt, index_names(tt), num=num, resample=resample
-                    , unique.name = new.index.name )
+    resampled <-
+        resample_by_cols( tt, index_names(tt), num=num, resample=resample
+                        , unique.name = new.index.name )
+    if(!is.null(new.index.name)) {
+        as.time.table( resampled, new.index.name, time_name(tt), measurement_names(tt)
+                     , c(index_names(tt), auxiliary_names(tt)) )
+    } else {
+        resampled
+    }
 }
 
 resample_dynamics_default_weightfun <- function(d, h=0.5) {

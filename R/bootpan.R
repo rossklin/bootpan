@@ -60,7 +60,7 @@ resample_by_cols <- function( dt, cols=colnames(dt), num=NULL
     result <- available[result.indices]
     if(!is.null(unique.name))
         result[,eval(unique.name):=.I]
-    result
+    dt[setkeyv(result, cols)]
 }
 
 #' Generate panel/time series samples by "Markov" procedure
