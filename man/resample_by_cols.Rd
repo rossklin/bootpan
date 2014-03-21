@@ -2,7 +2,8 @@
 \alias{resample_by_cols}
 \title{Resample by a number of columns}
 \usage{
-resample_by_cols(dt, cols = colnames(dt), num = NULL, resample = TRUE)
+resample_by_cols(dt, cols = colnames(dt), num = NULL, resample = TRUE,
+  unique.name = NULL)
 }
 \arguments{
   \item{dt}{\code{data.table} to resample from}
@@ -15,6 +16,10 @@ resample_by_cols(dt, cols = colnames(dt), num = NULL, resample = TRUE)
 
   \item{resample}{whether to sample with replacement
   (default)}
+
+  \item{unique.name}{column name to use for disambiguating
+  resampled values (set to NULL, default, not to include
+  one)}
 }
 \description{
 Resample observations from a \code{data.frame} by

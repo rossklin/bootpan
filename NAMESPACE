@@ -1,3 +1,6 @@
+export(resample_dynamics)
+export(resample_series)
+export(sample_markov)
 import(data.table)
 import(dynpan)
 import(flanner)

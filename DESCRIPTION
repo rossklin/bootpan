@@ -15,6 +15,7 @@ Imports:
     timetablr (>= 0.1),
     dynpan (>= 0.1)
 Suggests:
+    timetablr (>= 0.1),
     testthat (>= 0.8)
 License: BSD_3_clause + file LICENSE
 LazyData: true
