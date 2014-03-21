@@ -7,4 +7,5 @@
 #' @import timetablr
 #' @import flanner
 #' @import dynpan
+#' @import stats
 NULL
