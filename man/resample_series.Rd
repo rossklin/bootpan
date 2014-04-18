@@ -1,8 +1,9 @@
 \name{resample_series}
 \alias{resample_series}
-\title{Resample series from a \code{time.table}}
+\title{non-boot interface for resampling series}
 \usage{
-resample_series(tt, num, resample = TRUE, new.index.name = "resample")
+resample_series(tt, num = NULL, resample = TRUE,
+  new.index.name = "resample")
 }
 \arguments{
   \item{tt}{\code{time.table} to resample from}

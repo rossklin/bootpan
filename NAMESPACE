@@ -1,3 +1,5 @@
+export(boot_resample_dynamics)
+export(boot_resample_series)
 export(resample_dynamics)
 export(resample_series)
 export(sample_markov)

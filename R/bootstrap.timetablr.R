@@ -29,7 +29,7 @@
 ## (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 ## OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#' Resample series from a \code{time.table}
+#' non-boot interface for resampling series
 #'
 #' Resample whole series from a \code{time.table}, disambiguating names if
 #' necessary (while retaining the types of each column).
@@ -51,6 +51,48 @@ resample_series <- function(tt, num=NULL, resample=TRUE, new.index.name="resampl
     } else {
         resampled
     }
+}
+
+#' boot interface for resampling series
+#'
+#' @param data time.table to resample from
+#' @param statistic statistic to apply to each resampled time.table
+#' @param R number of bootstrap replicates
+#' @param ... additonal parameters to \code{boot} (and therefore indirectly to \code{statistic})
+#' @param include.other whether to also pass (as second argument to \code{statistic}) a time.table containing those entities not in the bootstrapped one
+#' @param new.index.name column name to use for the new index (defaults to "resample"), old index columns are stored as auxiliary variables
+#' 
+#' @export
+boot_resample_series <- function(data, statistic, R, ..., include.other=TRUE, new.index.name="resample") {
+    require(boot)
+    boot.args <- list(...)
+    boot.args$data <- unique(index(data))
+    boot.args$R <- R
+    #
+    boot.args$statistic <- if(is.null(boot.args$m)) {
+        function(indices, ents, ...) {
+            ss <- as.data.table(indices[ents,])[,eval(new.index.name):=.I]
+            statistic(promote( subset(data, index=ss)
+                             , c("index", rep("auxiliary", length(index_names(data))))
+                             , c(new.index.name, index_names(data)) ), ...)
+        }
+    } else {
+        function(indices, ents, other, ...) {
+            ss <- as.data.table(indices[ents,])[,eval(new.index.name):=.I]
+            ssother <- as.data.table(indices[other,])
+            statistic( promote( subset(data, index=ss)
+                              , c("index", rep("auxiliary", length(index_names(data))))
+                              , c(new.index.name, index_names(data)) )
+                     , subset(data, index=ssother), ...)
+        }
+    }
+    #
+    result <- do.call(boot, boot.args)
+    # print.boot inspects this...
+    result$call <- match.call()
+    # Otherwise print.boot thinks we're doing case resampling for censored data...
+    result$call[[1L]] <- quote(boot)
+    result
 }
 
 resample_dynamics_default_weightfun <- function(d, h=0.5) {
@@ -141,4 +183,41 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         as.time.table( resampled, index.name, time_name(tt), measurement_names(tt)
                      , c(index_names(tt), auxiliary_names(tt), maybe(weight.name, c())) )
     }
+}
+
+#' boot interface to resample_dynamics
+#'
+#' @param data time.table the dynamics of which are reused
+#' @param statistic the statistic to compute for each new dataset
+#' @param R number of bootstrap replicates
+#' @param k the number of nearest neighbours to resample from
+#' @param ... additonal parameters to \code{boot} (and therefore indirectly to \code{statistic})
+#' @param new.index.name column name for the new unambiguous indices (defaults to "resample", set to NULL not to include one)
+#' @param weight.name Name of new (auxiliary) column containing the weight of the sampled point
+#' @param weight.fun weight function for local resampling
+#'
+#' @export
+boot_resample_dynamics <- function( data, statistic, R, k, ...
+                                  , new.index.name = "resample"
+                                  , weight.name = NULL
+                                  , weight.fun = resample_dynamics_default_weightfun ) {
+    require(boot)
+    boot.args <- list(...)
+    boot.args$data <- data
+    boot.args$statistic <- statistic
+    boot.args$R <- R
+    boot.args$sim <- "parametric"
+    boot.args$ran.gen <- function(unused1, unused2) {
+        resample_dynamics( data, k=k
+                         , new.index.name=new.index.name
+                         , weight.name=weight.name
+                         , weight.fun=weight.fun )
+    }
+    #
+    result <- do.call(boot, boot.args)
+    # print.boot inspects this...
+    result$call <- match.call()
+    # Otherwise print.boot thinks we're doing case resampling for censored data...
+    result$call[[1L]] <- quote(boot)
+    result
 }

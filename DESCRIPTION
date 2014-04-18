@@ -16,6 +16,7 @@ Imports:
     dynpan (>= 0.1)
 Suggests:
     timetablr (>= 0.1),
-    testthat (>= 0.8)
+    testthat (>= 0.8),
+    boot
 License: BSD_3_clause + file LICENSE
 LazyData: true
