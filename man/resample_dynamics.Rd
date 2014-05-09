@@ -5,7 +5,7 @@
 resample_dynamics(tt, num = nrow(unique(index(tt))), k,
   new.index.name = "resample", weight.name = NULL,
   weight.fun = resample_dynamics_default_weightfun, frequency = attr(tt,
-  "frequency"), sample.from = frequency$from, ...)
+  "frequency"), sample.from = frequency$from, resample.steps = TRUE, ...)
 }
 \arguments{
   \item{tt}{\code{time.table} to bootstrap from}
@@ -31,6 +31,12 @@ resample_dynamics(tt, num = nrow(unique(index(tt))), k,
   \item{sample.from}{initial year of \code{tt} to sample
   from, defaults to the year specified in
   \code{frequency}.}
+
+  \item{resample.steps}{whether to resample relative (to
+  current position) transitions instead of actual
+  transitions (defaults to TRUE), use FALSE if you want the
+  resampled series to consisit only of data points in the
+  original data set}
 
   \item{...}{additional arguments to pass to
   \code{weight.fun}}

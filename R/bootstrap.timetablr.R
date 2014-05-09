@@ -116,6 +116,7 @@ resample_dynamics_default_weightfun <- function(d, h=0.5) {
 #' @param weight.fun weight function for local resampling
 #' @param frequency list containing starting (from) and stopping (to) times as well as the lenght of the timestep (delta), defaults to using information from \code{tt}. 
 #' @param sample.from initial year of \code{tt} to sample from, defaults to the year specified in \code{frequency}.
+#' @param resample.steps whether to resample relative (to current position) transitions instead of actual transitions (defaults to TRUE), use FALSE if you want the resampled series to consisit only of data points in the original data set
 #' @param ... additional arguments to pass to \code{weight.fun}
 #'
 #' @details Note that only complete cases from \code{tt} are used. If no
@@ -129,6 +130,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
                              , weight.fun = resample_dynamics_default_weightfun
                              , frequency=attr(tt, "frequency")
                              , sample.from=frequency$from
+                             , resample.steps=TRUE
                              , ... ) {
     times <- with(frequency, seq(from, to, delta))
     nms <- safe_name(tt, num=2)
@@ -146,34 +148,56 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         result
     }
     #
-    tt.diff <- diff(tt.complete)
-    complete.diff <- complete.cases(measurement(tt.diff))
-    tt.complete <- subset(tt.complete, expr=complete.diff)
-    tt.diff <- subset(tt.diff, expr=complete.diff)
-    stopifnot(all.equal(index(with.time=T, tt.complete), index(with.time=T, tt.diff)))
-    #
-    tt.complete <- flanner_by_measurement(tt.complete)
-    #
-    rtransition <- function(tfrom, tto, current) {
-        # Find neighbouring point row numbers
-        neighbours <- knn_lookup_rows(tt.complete, current, k)
-        neighbours
-        # Pick the step differences corresponding to the neighbouring points
-        diffs <-
+    rtransition <- if(resample.steps) {
+        tt.diff <- diff(tt.complete)
+        complete.diff <- complete.cases(measurement(tt.diff))
+        tt.complete <- subset(tt.complete, expr=complete.diff)
+        tt.diff <- subset(tt.diff, expr=complete.diff)
+        stopifnot(all.equal(index(with.time=T, tt.complete), index(with.time=T, tt.diff)))
+        ##
+        tt.complete <- flanner_by_measurement(tt.complete)
+        ##
+        function(tfrom, tto, current) {
+            # Find neighbouring point row numbers
+            neighbours <- knn_lookup_rows(tt.complete, current, k)
+            # Pick the step differences corresponding to the neighbouring points
+            diffs <-
             # Adjoint distance and index information and key by index
-            setkeyv( tt.diff[neighbours][,
+                setkeyv( tt.diff[neighbours][,
+                             eval(tmp.dist.name):=attr(neighbours,"distance")][,
+                         eval(index.name):=rep(current[[index.name]], each=k)]
+                       , eval(index.name) )[,
+                       # Apply weight per index
+                       eval(tmp.dist.name):=weight.fun(.SD[[tmp.dist.name]]),by=eval(index.name)][,
+                       # Sample one row for each index
+                      .SD[sample.int(nrow(.SD), 1, prob=.SD[[tmp.dist.name]])],by=eval(index.name)]
+            setkeyv(current, index.name)
+            # Step the current values
+            for(col in measurement_names(tt))
+                diffs[,eval(col):=.SD[[col]]+current[[col]]]
+            diffs[,colnames(current),with=FALSE]
+        }
+    } else {
+        tt.lag <- timetablr:::lag.time.table(tt.complete)
+        complete.lag <- complete.cases(measurement(tt.lag))
+        tt.lag <- subset(tt.lag, expr=complete.lag)
+        tt.complete <- subset(tt.lag, expr=complete.lag)
+        stopifnot(all.equal(index(with.time=T, tt.complete), index(with.time=T, tt.lag)))
+        ##
+        tt.lag <- flanner_by_measurement(tt.lag)
+        ##
+        function(tfrom, tto, current) {
+            neighbours <- knn_lookup_rows(tt.lag, current, k)
+            nxt <- setkeyv( tt[neighbours][,
                          eval(tmp.dist.name):=attr(neighbours,"distance")][,
                          eval(index.name):=rep(current[[index.name]], each=k)]
-                   , eval(index.name) )[,
-                   # Apply weight per index
-                   eval(tmp.dist.name):=weight.fun(.SD[[tmp.dist.name]]),by=eval(index.name)][,
-                   # Sample one row for each index
-                  .SD[sample.int(nrow(.SD), 1, prob=.SD[[tmp.dist.name]])],by=eval(index.name)]
-        setkeyv(current, index.name)
-        # Step the current values
-        for(col in measurement_names(tt))
-            diffs[,eval(col):=.SD[[col]]+current[[col]]]
-        diffs[,colnames(current),with=FALSE]
+                       , eval(index.name) )[,
+                       # Apply weight per index
+                       eval(tmp.dist.name):=weight.fun(.SD[[tmp.dist.name]]),by=eval(index.name)][,
+                       # Sample one row for each index
+                      .SD[sample.int(nrow(.SD), 1, prob=.SD[[tmp.dist.name]])],by=eval(index.name)]
+            nxt[,colnames(current),with=FALSE]
+        }
     }
     #
     resampled <- sample_markov(times, rinitial, rtransition, time.column.name=time_name(tt))
@@ -202,6 +226,7 @@ boot_resample_dynamics <- function( data, statistic, R, k, ...
                                   , weight.name = NULL
                                   , weight.fun = resample_dynamics_default_weightfun ) {
     require(boot)
+    #
     boot.args <- list(...)
     boot.args$data <- data
     boot.args$statistic <- statistic
