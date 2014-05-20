@@ -181,7 +181,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         tt.lag <- timetablr:::lag.time.table(tt.complete)
         complete.lag <- complete.cases(measurement(tt.lag))
         tt.lag <- subset(tt.lag, expr=complete.lag)
-        tt.complete <- subset(tt.lag, expr=complete.lag)
+        tt.complete <- subset(tt.complete, expr=complete.lag)
         stopifnot(all.equal(index(with.time=T, tt.complete), index(with.time=T, tt.lag)))
         ##
         tt.lag <- flanner_by_measurement(tt.lag)
