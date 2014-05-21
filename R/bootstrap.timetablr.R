@@ -132,6 +132,8 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
                              , sample.from=frequency$from
                              , resample.steps=TRUE
                              , ... ) {
+    if(inherits(tt[[time_name(tt)]], "numeric"))
+        warning("resample_dynamics does not play well with floating point times")
     times <- with(frequency, seq(from, to, delta))
     nms <- safe_name(tt, num=2)
     index.name <- maybe(new.index.name, nms[1])
