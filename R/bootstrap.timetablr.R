@@ -190,7 +190,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         ##
         function(tfrom, tto, current) {
             neighbours <- knn_lookup_rows(tt.lag, current, k)
-            nxt <- setkeyv( tt[neighbours][,
+            nxt <- setkeyv( tt.complete[neighbours][,
                          eval(tmp.dist.name):=attr(neighbours,"distance")][,
                          eval(index.name):=rep(current[[index.name]], each=k)]
                        , eval(index.name) )[,
