@@ -189,7 +189,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         tt.complete <- subset(tt.complete, expr=complete.lag)
         stopifnot(all.equal(index(with.time=T, tt.complete), index(with.time=T, tt.lag)))
         ##
-        tt.lag <- flanner_by_measurement(tt.lag)
+        tt.complete <- flanner_by_measurement(tt.complete)
         ##
         function(tfrom, tto, current) {
             neighbours <- knn_lookup_rows(tt.complete, current, k)
