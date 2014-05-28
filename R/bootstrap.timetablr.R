@@ -192,8 +192,8 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
         tt.lag <- flanner_by_measurement(tt.lag)
         ##
         function(tfrom, tto, current) {
-            neighbours <- knn_lookup_rows(tt.lag, current, k)
-            nxt <- setkeyv( tt.complete[neighbours][,
+            neighbours <- knn_lookup_rows(tt.complete, current, k)
+            nxt <- setkeyv( tt.lag[neighbours][,
                          eval(tmp.dist.name):=attr(neighbours,"distance")][,
                          eval(index.name):=rep(current[[index.name]], each=k)]
                        , eval(index.name) )[,
