@@ -118,6 +118,7 @@ resample_dynamics_default_weightfun <- function(d, h=0.5) {
 #' @param sample.from initial year of \code{tt} to sample from, defaults to the year specified in \code{frequency}.
 #' @param resample.steps whether to resample relative (to current position) transitions instead of actual transitions (defaults to TRUE), use FALSE if you want the resampled series to consisit only of data points in the original data set
 #' @param ... additional arguments to pass to \code{weight.fun}
+#' @param debug.run (internal use)
 #'
 #' @details Note that only complete cases from \code{tt} are used. If no
 #' "new.index.name" is provided the procedure returns a \code{data.table} rather
@@ -131,7 +132,8 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
                              , frequency=attr(tt, "frequency")
                              , sample.from=frequency$from
                              , resample.steps=TRUE
-                             , ... ) {
+                             , ...
+                             , debug.run = FALSE ) {
     if(inherits(tt[[time_name(tt)]], "numeric"))
         warning("resample_dynamics does not play well with floating point times")
     times <- with(frequency, seq(from, to, delta))
@@ -177,6 +179,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
             # Step the current values
             for(col in measurement_names(tt))
                 diffs[,eval(col):=.SD[[col]]+current[[col]]]
+            if(debug.run) recover()
             diffs[,colnames(current),with=FALSE]
         }
     } else {
@@ -198,6 +201,7 @@ resample_dynamics <- function( tt, num = nrow(unique(index(tt))), k
                        eval(tmp.dist.name):=weight.fun(.SD[[tmp.dist.name]]),by=eval(index.name)][,
                        # Sample one row for each index
                       .SD[sample.int(nrow(.SD), 1, prob=.SD[[tmp.dist.name]])],by=eval(index.name)]
+            if(debug.run) recover()
             nxt[,colnames(current),with=FALSE]
         }
     }
