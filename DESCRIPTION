@@ -10,13 +10,8 @@ Description: Bootstraping methods for panel data, with focus on dynamic panel
 Depends:
     R (>= 3.0.1)
 Imports:
-    data.table (>= 1.8),
-    flanner (>= 0.1),
-    timetablr (>= 0.1),
-    dynpan (>= 0.1)
+    data.table (>= 1.8), flanner (>= 0.1), timetablr (>= 0.1), dynpan (>= 0.1)
 Suggests:
-    timetablr (>= 0.1),
-    testthat (>= 0.8),
-    boot
+    timetablr (>= 0.1), testthat (>= 0.8), boot
 License: BSD_3_clause + file LICENSE
 LazyData: true
